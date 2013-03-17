@@ -1,0 +1,73 @@
+int CELL_SIZE = 5;
+int PIXEL_WIDTH = 1300;
+int PIXEL_HEIGHT = 700;
+float INITIAL_POPULATION_DENSITY = 0.5;
+
+int FRAME_RATE = 24;
+
+int WORLD_WIDTH = PIXEL_WIDTH/CELL_SIZE;
+int WORLD_HEIGHT = PIXEL_HEIGHT/CELL_SIZE;
+int[][] world;
+
+void setup() {
+    size(PIXEL_WIDTH, PIXEL_HEIGHT);
+    frameRate(FRAME_RATE);
+    world = new int[WORLD_WIDTH][WORLD_HEIGHT];
+    for (int i=0; i<WORLD_WIDTH * WORLD_HEIGHT * INITIAL_POPULATION_DENSITY; i++) {
+        world[(int)random(WORLD_WIDTH)][(int)random(WORLD_HEIGHT)] = 1;
+    }
+}
+
+void draw() {
+    background(0);
+    evolve();
+    draw_world();
+}
+
+void evolve() {
+    int[][] new_world = new int[WORLD_WIDTH][WORLD_HEIGHT];
+    for (int x=1; x<WORLD_WIDTH-1; x++) {
+        for (int y=1; y<WORLD_HEIGHT-1; y++) {
+            // add up the neighbers from top left, clockwise
+            int neighbors = world[x-1][y-1] +
+                world[x][y-1] +
+                world[x+1][y-1] +
+                world[x-1][y] +
+                world[x+1][y] +
+                world[x-1][y+1] +
+                world[x][y+1] +
+                world[x+1][y+1];
+
+            boolean empty = world[x][y] == 0;
+            int alive = 0;
+            if (!empty) {
+                if (neighbors < 2) {
+                    alive = 0;
+                } else if (neighbors <= 3) {
+                    alive = 1;
+                } else {
+                    alive = 0;
+                }
+            } else {
+                if (neighbors == 3) {
+                    alive = 1;
+                }
+            }
+            new_world[x][y] = alive;
+        }
+    }
+    arrayCopy(new_world, world);
+}
+
+void draw_world() {
+    for (int x=1; x<WORLD_WIDTH-1; x++) {
+        for (int y=1; y<WORLD_HEIGHT-1; y++) {
+            if (world[x][y] == 1) {
+                fill(26, 255, 0);
+            } else {
+                fill(0);
+            }
+            rect(x*CELL_SIZE, y*CELL_SIZE, CELL_SIZE, CELL_SIZE);
+        }
+    }
+}

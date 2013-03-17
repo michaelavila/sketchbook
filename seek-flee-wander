@@ -1,0 +1,110 @@
+float MAX_SPEED = 0.1;
+
+Static seeker;
+Static target;
+int time;
+
+void setup() {
+    size(1300, 700);
+    frameRate(20);
+
+    time = 0;
+    seeker = new Static();
+    target = new Static(new PVector(width/2, height/2), 0.0);
+}
+
+void draw() {
+    background(0);
+
+    // move seeker
+    Steering seeking = seek(seeker, target);
+    seeker.position.add(PVector.mult(seeking.velocity, time));
+
+    // move target
+    Steering not_seeking;
+    if (target.position.dist(seeker.position) < 100) { // if predator within range flee
+        not_seeking = flee(target, seeker);
+    } else {                                           // else wander
+        not_seeking = wander(target);
+        target.orientation += not_seeking.rotation;
+    }
+    target.position.add(PVector.mult(not_seeking.velocity, time));
+
+    // draw seeker and target
+    ellipse(seeker.position.x, seeker.position.y, 30, 30);
+    ellipse(target.position.x, target.position.y, 30, 30);
+
+    time++;
+}
+
+Steering wander(Static wanderer) {
+    Steering steering = new Steering();
+
+    // convert the orientation into vector with a magnitude of 1.0
+    PVector newVelocity = new PVector(sin(wanderer.orientation), cos(wanderer.orientation));
+    newVelocity.normalize();
+    // scale the velocity to MAX_SPEED
+    newVelocity.mult(MAX_SPEED);
+    steering.velocity = newVelocity;
+
+    // randomly adjust rotation
+    steering.rotation = random(-0.5, 0.5);
+
+    return steering;
+}
+
+
+Steering flee(Static fleeer, Static seeker) {
+    Steering steering = new Steering();
+
+    // get direction to the target
+    steering.velocity = PVector.sub(fleeer.position, seeker.position);
+    // move full speed in this direction
+    steering.velocity.normalize();
+    steering.velocity.mult(MAX_SPEED);
+
+    // face target
+    orient(target, steering.velocity);
+
+    return steering;
+}
+
+Steering seek(Static seeker, Static target) {
+    Steering steering = new Steering();
+
+    // get direction to the target
+    steering.velocity = PVector.sub(target.position, seeker.position);
+    // move full speed in this direction
+    steering.velocity.normalize();
+    steering.velocity.mult(MAX_SPEED);
+
+    // face target
+    orient(target, steering.velocity);
+
+    return steering;
+}
+
+void orient(Static target, PVector velocity) {
+    if (velocity.mag() <= 0) {
+        target.orientation = atan2(velocity.x, velocity.y);
+    }
+}
+
+class Steering {
+    PVector velocity;
+    float rotation;
+}
+
+class Static {
+    PVector position;
+    float orientation;
+
+    Static(PVector position, float orientation) {
+        this.position = position;
+        this.orientation = orientation;
+    }
+
+    Static() {
+        this(new PVector(), 0.0);
+    }
+}

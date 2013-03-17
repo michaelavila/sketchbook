@@ -1,0 +1,90 @@
+int FRAME_RATE = 32;
+int SCREEN_WIDTH = 1300;
+int SCREEN_HEIGHT = 700;
+
+float GRAVITY = 0.5;
+float FRICTION = 0.99;
+Ball ball;
+boolean falling = true;
+
+void setup() {
+    size(SCREEN_WIDTH, SCREEN_HEIGHT);
+    frameRate(FRAME_RATE);
+
+    ball = new Ball(30);
+    ball.position.x = SCREEN_WIDTH/2;
+    ball.position.y = 100;
+}
+
+void draw() {
+    background(0);
+
+    if (falling) {
+        // APPLY FORCES
+        ball.velocity.y += GRAVITY;
+        ball.velocity.y *= FRICTION;
+        ball.velocity.x *= FRICTION;
+        ball.move();
+
+        // BOUNCE
+        float bottom_boundary = SCREEN_HEIGHT - ball.radius;
+        float left_boundary = ball.radius;
+        float right_boundary = SCREEN_WIDTH - ball.radius;
+        if (ball.position.y > bottom_boundary) {
+            ball.position.y = bottom_boundary;
+            ball.velocity.y *= -FRICTION;
+        }
+        if (ball.position.x < left_boundary) {
+            ball.position.x = left_boundary;
+            ball.velocity.x *= -FRICTION;
+        } else if (ball.position.x > right_boundary) {
+            ball.position.x = right_boundary;
+            ball.velocity.x *= -FRICTION;
+        }
+    }
+
+    ball.draw();
+}
+
+void mousePressed() {
+    float distance = sqrt(sq(mouseX-ball.position.x) + sq(mouseY-ball.position.y));
+    if (distance < ball.radius) {
+        ball.velocity.x = ball.velocity.y = 0;
+        falling = false;
+    }
+}
+
+void mouseDragged() {
+    if (!falling) {
+        ball.position.x = mouseX;
+        ball.position.y = mouseY;
+
+        ball.velocity.x = mouseX - pmouseX;
+        ball.velocity.y = mouseY - pmouseY;
+    }
+}
+
+void mouseReleased() {
+    falling = true;
+}
+
+class Ball {
+    PVector position;
+    PVector velocity;
+    int radius;
+
+    Ball(int radius) {
+        this.position = new PVector();
+        this.velocity = new PVector();
+        this.radius = radius;
+    }
+
+    void move() {
+        this.position.add(this.velocity);
+    }
+
+    void draw() {
+        int diameter = this.radius * 2;
+        ellipse(this.position.x, this.position.y, diameter, diameter);
+    }
+}

@@ -1,0 +1,101 @@
+int FRAME_RATE = 24;
+int SCREEN_WIDTH = 1300;
+int SCREEN_HEIGHT = 700;
+
+int MIN_MASS = 5;
+int MAX_MASS = 30;
+
+int PARTICLE_COUNT = 40;
+Particle[] particles = new Particle[PARTICLE_COUNT];
+
+void setup() {
+    prepare();
+    createParticles();
+}
+
+void draw() {
+    background(0);
+
+    for (int i=0; i<PARTICLE_COUNT; i++) {
+        Particle mass1 = particles[i];
+        for (int j=i+1; j<PARTICLE_COUNT; j++) {
+            Particle mass2 = particles[j];
+            if (mass1.distance(mass2) < (mass1.radius + mass2.radius)) {
+                handleCollision(mass1, mass2);
+            }
+        }
+
+        mass1.move();
+        mass1.draw();
+    }
+}
+
+void handleCollision(Particle mass1, Particle mass2) {
+    PVector difference = PVector.sub(mass2.position, mass1.position);
+    difference.normalize();
+    float x1 = mass1.velocity.dot(difference);
+    float x2 = mass2.velocity.dot(difference);  
+    float momentum = (2.0 * (x1 - x2))/(mass1.mass + mass2.mass);
+    mass1.velocity.sub(PVector.mult(difference, (momentum * mass2.mass)));
+    mass2.velocity.add(PVector.mult(difference, (momentum * mass1.mass)));
+}
+
+void prepare() {
+    size(SCREEN_WIDTH, SCREEN_HEIGHT);
+    frameRate(FRAME_RATE);
+    noStroke();
+}
+
+void createParticles() {
+    for (int i=0; i<PARTICLE_COUNT; i++) {
+        particles[i] = new Particle(MIN_MASS + (int)(random(MAX_MASS-MIN_MASS)));
+        particles[i].velocity.x = (int)random(10) - 5;
+        particles[i].velocity.y = (int)random(10) - 5;
+    }
+}
+
+class Particle {
+    int mass;
+    float radius;
+    PVector position;
+    PVector velocity;
+    PVector acceleration;
+
+    String toString() {
+        return mass + " - " + position + " - " + velocity + " - " + acceleration;
+    }
+
+    Particle(int mass) {
+        this.mass = mass;
+        this.radius = mass/2.0;
+        this.position = new PVector((int)random(SCREEN_WIDTH), (int)random(SCREEN_HEIGHT));
+        this.velocity = new PVector();
+    }
+
+    float distance(Particle particle) {
+        return sqrt(sq(this.position.x-particle.position.x) + sq(this.position.y-particle.position.y));
+    }
+
+    void draw() {
+        fill(255);
+        ellipse(this.position.x, this.position.y, this.mass, this.mass);
+    }
+
+    void move() {
+        this.position.add(this.velocity);
+        this.wrapAtBoundaries();
+    }
+
+    void wrapAtBoundaries() {
+        if (this.position.x < 0) {
+            this.position.x = SCREEN_WIDTH;
+        } else if (this.position.x > SCREEN_WIDTH) {
+            this.position.x = 0;
+        }
+        if (this.position.y < 0) {
+            this.position.y = SCREEN_HEIGHT;
+        } else if (this.position.y > SCREEN_HEIGHT) {
+            this.position.y = 0;
+        }
+    }
+}

@@ -1,0 +1,107 @@
+int FRAME_RATE = 24;
+int SCREEN_WIDTH = 1300;
+int SCREEN_HEIGHT = 700;
+
+float GRAVITY = 0.01;
+int MIN_MASS = 2;
+int MAX_MASS = 4;
+
+int PARTICLE_COUNT = 300;
+Particle[] particles = new Particle[PARTICLE_COUNT];
+
+void setup() {
+    prepare();
+    createParticles();
+}
+
+void draw() {
+    background(0);
+
+    for (int i=0; i<PARTICLE_COUNT; i++) {
+        Particle mass1 = particles[i];
+        for (int j=i+1; j<PARTICLE_COUNT; j++) {
+            Particle mass2 = particles[j];
+            gravitate(mass1, mass2);
+        }
+
+        mass1.move();
+        mass1.draw();
+    }
+}
+
+void prepare() {
+    size(SCREEN_WIDTH, SCREEN_HEIGHT);
+    frameRate(FRAME_RATE);
+    noStroke();
+}
+
+void createParticles() {
+    for (int i=0; i<PARTICLE_COUNT; i++) {
+        particles[i] = new Particle(MIN_MASS + (int)(random(MAX_MASS-MIN_MASS)));
+    }
+}
+
+void gravitate(Particle mass1, Particle mass2) {
+    // calculate distance
+    float distance = mass1.distance(mass2);
+    float gravitation = 0;
+    if (distance > 0 && distance > (mass1.mass/2 + mass2.mass/2)) {
+        // calculate graviy
+        gravitation = GRAVITY * ((mass1.mass * mass2.mass)/sq(distance));
+    }
+    mass1.gravitateTo(gravitation, mass2);
+    mass2.gravitateTo(gravitation, mass1);
+}
+
+class Particle {
+    int mass;
+    PVector position;
+    PVector velocity;
+    PVector acceleration;
+
+    String toString() {
+        return mass + " - " + position + " - " + velocity + " - " + acceleration;
+    }
+
+    Particle(int mass) {
+        this.mass = mass;
+        this.position = new PVector((int)random(SCREEN_WIDTH), (int)random(SCREEN_HEIGHT));
+        this.velocity = new PVector();
+        this.acceleration = new PVector();
+    }
+
+    float distance(Particle particle) {
+        return sqrt(sq(this.position.x-particle.position.x) + sq(this.position.y-particle.position.y));
+    }
+
+    void gravitateTo(float gravitation, Particle particle) {
+        PVector force = PVector.sub(particle.position, this.position);
+        force.normalize();
+        force.mult(gravitation);
+        this.velocity.add(force);
+    }
+
+    void draw() {
+        fill(255);
+        ellipse(this.position.x, this.position.y, this.mass, this.mass);
+    }
+
+    void move() {
+        this.velocity.add(this.acceleration);
+        this.position.add(this.velocity);
+        this.wrapAtBoundaries();
+    }
+
+    void wrapAtBoundaries() {
+        if (this.position.x < 0) {
+            this.position.x = SCREEN_WIDTH;
+        } else if (this.position.x > SCREEN_WIDTH) {
+            this.position.x = 0;
+        }
+        if (this.position.y < 0) {
+            this.position.y = SCREEN_HEIGHT;
+        } else if (this.position.y > SCREEN_HEIGHT) {
+            this.position.y = 0;
+        }
+    }
+}
